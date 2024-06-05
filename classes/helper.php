@@ -46,7 +46,17 @@ class helper {
     public static function init(\core\event\base $event) {
         $dns = get_config('tool_sentry', 'dns');
         if ($dns) {
-            \Sentry\init(['dsn' => $dns]);
+            \Sentry\init([
+                'dsn' => $dns,
+                'error_types' => E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR, // Only capture fatal errors
+                'before_send' => function (Sentry\Event $event) {
+                    if ($event->getLevel() === \Sentry\Severity::warning()) {
+                        // Return null to discard the event
+                        return null;
+                    }
+                    return $event;
+                },
+            ]);
         }
     }
 
